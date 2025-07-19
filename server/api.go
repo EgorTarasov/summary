@@ -15,9 +15,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	// Middleware to require that the user is logged in
 	router.Use(p.MattermostAuthorizationRequired)
 
-	apiRouter := router.PathPrefix("/api/v1").Subrouter()
+	_ = router.PathPrefix("/api/v1").Subrouter()
 
-	apiRouter.HandleFunc("/hello", p.HelloWorld).Methods(http.MethodGet)
 
 	router.ServeHTTP(w, r)
 }
@@ -34,9 +33,4 @@ func (p *Plugin) MattermostAuthorizationRequired(next http.Handler) http.Handler
 	})
 }
 
-func (p *Plugin) HelloWorld(w http.ResponseWriter, r *http.Request) {
-	if _, err := w.Write([]byte("Hello, world!")); err != nil {
-		p.API.LogError("Failed to write response", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
+

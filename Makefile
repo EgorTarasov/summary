@@ -164,7 +164,7 @@ apply:
 ## Install go tools
 install-go-tools:
 	@echo Installing go tools
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
 	$(GO) install gotest.tools/gotestsum@v1.7.0
 
 ## Runs eslint and golangci-lint
@@ -175,6 +175,15 @@ check-style: manifest-check apply webapp/node_modules install-go-tools
 ifneq ($(HAS_WEBAPP),)
 	cd webapp && npm run lint
 	cd webapp && npm run check-types
+endif
+
+.PHONY: fmt-go
+fmt-go:
+ifneq ($(HAS_SERVER),)
+	@echo Formatting Go code
+	gofmt -s -w server/
+	$(GO) install golang.org/x/tools/cmd/goimports@latest
+	$(GOBIN)/goimports -w server/
 endif
 
 # It's highly recommended to run go-vet first
@@ -410,5 +419,5 @@ help:
 mock:
 ifneq ($(HAS_SERVER),)
 	go install github.com/golang/mock/mockgen@v1.6.0
-	mockgen -destination=server/command/mocks/mock_commands.go -package=mocks github.com/mattermost/mattermost-plugin-starter-template/server/command Command
+	mockgen -destination=server/command/mocks/mock_commands.go -package=mocks github.com/EgorTarasov/summary/server/command Command
 endif

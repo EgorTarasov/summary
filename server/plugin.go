@@ -3,31 +3,33 @@ package main
 import (
 	"net/http"
 	"sync"
-	"time"
 
-	"github.com/mattermost/mattermost-plugin-starter-template/server/command"
-	"github.com/mattermost/mattermost-plugin-starter-template/server/store/kvstore"
+	"github.com/EgorTarasov/summary/server/internal/commands/summary"
+
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/mattermost/mattermost/server/public/pluginapi"
-	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
-	"github.com/pkg/errors"
 )
+
+type Command interface {
+	Handle(args *model.CommandArgs) (*model.CommandResponse, error)
+}
+
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
 type Plugin struct {
 	plugin.MattermostPlugin
 
-	// kvstore is the client used to read/write KV records for this plugin.
-	kvstore kvstore.KVStore
+	// // kvstore is the client used to read/write KV records for this plugin.
+	// kvstore kvstore.KVStore
 
 	// client is the Mattermost server API client.
-	client *pluginapi.Client
+	// client *pluginapi.Client
 
 	// commandClient is the client used to register and execute slash commands.
-	commandClient command.Command
+	commandClient Command
 
-	backgroundJob *cluster.Job
+	// backgroundJob *cluster.Job
 
 	// configurationLock synchronizes access to the configuration.
 	configurationLock sync.RWMutex
@@ -39,34 +41,37 @@ type Plugin struct {
 
 // OnActivate is invoked when the plugin is activated. If an error is returned, the plugin will be deactivated.
 func (p *Plugin) OnActivate() error {
-	p.client = pluginapi.NewClient(p.API, p.Driver)
+	// Initialize the pluginapi client
+	client := pluginapi.NewClient(p.API, p.Driver)
 
-	p.kvstore = kvstore.NewKVStore(p.client)
+	summaryHandler := summary.New(client)
+	// Initialize the command handler
+	p.commandClient = summaryHandler
 
-	p.commandClient = command.NewCommandHandler(p.client)
+	// p.kvstore = kvstore.NewKVStore(p.client)
 
-	job, err := cluster.Schedule(
-		p.API,
-		"BackgroundJob",
-		cluster.MakeWaitForRoundedInterval(1*time.Hour),
-		p.runJob,
-	)
-	if err != nil {
-		return errors.Wrap(err, "failed to schedule background job")
-	}
+	// job, err := cluster.Schedule(
+	// 	p.API,
+	// 	"BackgroundJob",
+	// 	cluster.MakeWaitForRoundedInterval(1*time.Hour),
+	// 	p.runJob,
+	// )
+	// if err != nil {
+	// 	return errors.Wrap(err, "failed to schedule background job")
+	// }
 
-	p.backgroundJob = job
+	// p.backgroundJob = job
 
 	return nil
 }
 
 // OnDeactivate is invoked when the plugin is deactivated.
 func (p *Plugin) OnDeactivate() error {
-	if p.backgroundJob != nil {
-		if err := p.backgroundJob.Close(); err != nil {
-			p.API.LogError("Failed to close background job", "err", err)
-		}
-	}
+	// if p.backgroundJob != nil {
+	// 	if err := p.backgroundJob.Close(); err != nil {
+	// 		p.API.LogError("Failed to close background job", "err", err)
+	// 	}
+	// }
 	return nil
 }
 

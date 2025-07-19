@@ -1,10 +1,11 @@
 {
-    "id": "com.mattermost.plugin-starter-template",
-    "name": "Plugin Starter Template",
-    "description": "This plugin serves as a starting point for writing a Mattermost plugin.",
-    "homepage_url": "https://github.com/mattermost/mattermost-plugin-starter-template",
-    "support_url": "https://github.com/mattermost/mattermost-plugin-starter-template/issues",
+    "id": "com.mattermost.plugin-llm-summary",
+    "name": "LLM Summary Plugin",
+    "description": "Generate summaries of threads and channels using Large Language Models",
+    "homepage_url": "https://github.com/EgorTarasov/summary",
+    "support_url": "https://github.com/EgorTarasov/summary/issues",
     "icon_path": "assets/starter-template-icon.svg",
+    "version": "0.1.0",
     "min_server_version": "6.2.1",
     "server": {
         "executables": {
@@ -15,12 +16,159 @@
             "windows-amd64": "server/dist/plugin-windows-amd64.exe"
         }
     },
-    "webapp": {
-        "bundle_path": "webapp/dist/main.js"
-    },
     "settings_schema": {
-        "header": "",
+        "header": "# LLM Summary Plugin Configuration\n\nConfigure your LLM provider and summary settings.",
         "footer": "",
-        "settings": []
+        "settings": [
+            {
+                "key": "llm_provider",
+                "display_name": "LLM Provider",
+                "type": "dropdown",
+                "help_text": "Select the LLM provider to use for generating summaries.",
+                "default": "ollama",
+                "options": [
+                    {
+                        "display_name": "Ollama (Local)",
+                        "value": "ollama"
+                    },
+                    {
+                        "display_name": "OpenAI",
+                        "value": "openai"
+                    }
+                ]
+            },
+            {
+                "key": "ollama_url",
+                "display_name": "Ollama Server URL",
+                "type": "text",
+                "help_text": "URL of your Ollama server (e.g., http://localhost:11434)",
+                "placeholder": "http://localhost:11434",
+                "default": "http://localhost:11434"
+            },
+            {
+                "key": "ollama_model",
+                "display_name": "Ollama Model",
+                "type": "text",
+                "help_text": "Ollama model to use (e.g., llama2, mistral, codellama)",
+                "placeholder": "llama2",
+                "default": "llama2"
+            },
+            {
+                "key": "openai_api_key",
+                "display_name": "OpenAI API Key",
+                "type": "text",
+                "help_text": "Your OpenAI API key (required when using OpenAI provider)",
+                "placeholder": "sk-..."
+            },
+            {
+                "key": "openai_model",
+                "display_name": "OpenAI Model",
+                "type": "text",
+                "help_text": "OpenAI model to use (e.g., gpt-3.5-turbo, gpt-4)",
+                "placeholder": "gpt-3.5-turbo",
+                "default": "gpt-3.5-turbo"
+            },
+            {
+                "key": "openai_base_url",
+                "display_name": "OpenAI Base URL",
+                "type": "text",
+                "help_text": "Base URL for OpenAI API (use for OpenAI-compatible APIs)",
+                "placeholder": "https://api.openai.com/v1",
+                "default": "https://api.openai.com/v1"
+            },
+            {
+                "key": "max_tokens",
+                "display_name": "Max Tokens",
+                "type": "number",
+                "help_text": "Maximum number of tokens for the summary",
+                "placeholder": "1000",
+                "default": 1000
+            },
+            {
+                "key": "temperature",
+                "display_name": "Temperature",
+                "type": "number",
+                "help_text": "LLM temperature (0.0-1.0). Lower values make output more focused and deterministic.",
+                "placeholder": "0.3",
+                "default": 0.3
+            },
+            {
+                "key": "summary_language",
+                "display_name": "Summary Language",
+                "type": "dropdown",
+                "help_text": "Language for the generated summaries",
+                "default": "auto",
+                "options": [
+                    {
+                        "display_name": "Auto-detect",
+                        "value": "auto"
+                    },
+                    {
+                        "display_name": "English",
+                        "value": "en"
+                    },
+                    {
+                        "display_name": "Russian",
+                        "value": "ru"
+                    },
+                    {
+                        "display_name": "Spanish",
+                        "value": "es"
+                    },
+                    {
+                        "display_name": "French",
+                        "value": "fr"
+                    },
+                    {
+                        "display_name": "German",
+                        "value": "de"
+                    }
+                ]
+            },
+            {
+                "key": "max_messages",
+                "display_name": "Max Messages",
+                "type": "number",
+                "help_text": "Maximum number of messages to process in a single summary request",
+                "placeholder": "50",
+                "default": 50
+            },
+            {
+                "key": "request_timeout",
+                "display_name": "Request Timeout (seconds)",
+                "type": "number",
+                "help_text": "Timeout for LLM API requests in seconds",
+                "placeholder": "30",
+                "default": 30
+            },
+            {
+                "key": "system_prompt",
+                "display_name": "System Prompt",
+                "type": "longtext",
+                "help_text": "Custom system prompt to guide the LLM's summarization behavior",
+                "default": "You are a helpful assistant that creates concise summaries of chat conversations. Focus on key points, decisions, and action items."
+            },
+            {
+                "key": "enable_channel_summary",
+                "display_name": "Enable Channel Summary",
+                "type": "bool",
+                "help_text": "Allow users to summarize channel messages",
+                "default": true
+            },
+            {
+                "key": "enable_thread_summary",
+                "display_name": "Enable Thread Summary",
+                "type": "bool",
+                "help_text": "Allow users to summarize thread messages",
+                "default": true
+            },
+            {
+                "key": "enable_caching",
+                "display_name": "Enable Caching",
+                "type": "bool",
+                "help_text": "Cache summary results to improve performance",
+                "default": false
+            }
+        ]
     }
 }
