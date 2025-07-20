@@ -1,0 +1,93 @@
+@startuml components
+!theme plain
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam component {
+  BackgroundColor lightblue
+  BorderColor darkblue
+}
+skinparam package {
+  BackgroundColor lightyellow
+  BorderColor orange
+}
+skinparam arrow {
+  Color darkblue
+}
+
+title Плагин суммаризации для Mattermost - Архитектура компонентов
+
+package "Сервер Mattermost" as MM {
+  [Фреймворк плагинов] as Framework
+  [Роутер команд] as Router
+}
+
+package "Плагин суммаризации" as Plugin {
+  [Главный модуль] as Main
+  [Конфигурация] as Config
+  [Обработчик команд + API] as Handler
+}
+
+package "Интеграция с LLM" as LLM {
+  [Интерфейс провайдера] as Interface
+
+  [Провайдер Ollama] as Ollama
+  [Провайдер OpenAI] as OpenAI
+}
+
+
+
+' Основные связи
+Framework -down-> Main : События жизненного цикла
+Router -down-> Main : Команды /summary
+Main -right-> Config : Загрузка настроек
+Main -down-> Handler : Инициализация
+
+Handler <-right-> Interface : Генерация резюме
+
+' Выбор провайдера (альтернативы)
+Interface ..> Ollama : <<выбран если llm_provider="ollama">>
+Interface ..> OpenAI : <<выбран если llm_provider="openai">>
+
+
+
+' Описания компонентов
+note right of Config
+  **Настройки плагина:**
+  • Выбор провайдера LLM
+  • Параметры подключения
+  • Языковые настройки
+  • Системные промпты
+end note
+
+note bottom of Handler
+  **Обработчик команд:**
+  • Получает команду /summary
+  • Извлекает сообщения из треда
+  • Отправляет на суммаризацию
+  • Возвращает результат пользователю
+end note
+
+note right of Interface
+  **Выбор LLM провайдера:**
+  • Единый интерфейс для всех провайдеров
+  • Переключение через конфигурацию
+  • Обработка ошибок провайдера
+end note
+
+note bottom of Ollama
+  **Локальные модели:**
+  • Работа без интернета
+  • Полный контроль данных
+  • GPU ускорение
+end note
+
+note bottom of OpenAI
+  **Облачные модели:**
+  • Высокое качествоч
+  • Быстрые ответы
+  • Требует API ключ
+end note
+
+
+
+@enduml

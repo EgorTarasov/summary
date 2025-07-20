@@ -1,0 +1,52 @@
+@startuml data-flow
+!theme plain
+title Mattermost LLM Summary Plugin - Data Flow
+
+actor User
+participant "Mattermost Server" as MM
+participant "Plugin" as Plugin
+participant "Configuration" as Config
+participant "Summary Handler" as Handler
+participant "LLM Provider\n(Ollama)" as LLM
+participant "Ollama API" as API
+database "Thread/Channel\nMessages" as Messages
+
+User -> MM: /summary [thread|channel]
+MM -> Plugin: ExecuteCommand()
+
+Plugin -> Config: getConfiguration()
+Config --> Plugin: LLM settings\n(host, model, etc.)
+
+Plugin -> Handler: Handle(args)
+Handler -> MM: Get posts from thread/channel
+MM -> Messages: Fetch messages
+Messages --> MM: Post list
+MM --> Handler: PostList
+
+Handler -> Handler: Filter & format messages
+note right: Remove deleted posts\nFormat user:message pairs
+
+Handler -> Handler: Create structured prompt
+note right: Build Russian prompt\nwith conversation context
+
+Handler -> LLM: Generate(context, prompt)
+LLM -> API: HTTP POST /api/generate
+note right: JSON request with\nmodel, prompt, options
+
+API --> LLM: Streaming response
+note right: Generated summary\nin Russian
+
+LLM --> Handler: Summary text
+
+alt LLM Success
+  Handler -> Handler: Format response
+  Handler --> Plugin: Formatted summary
+else LLM Error
+  Handler -> Handler: Create fallback summary
+  Handler --> Plugin: Fallback with original messages
+end
+
+Plugin --> MM: CommandResponse\n(ephemeral)
+MM --> User: Summary displayed\n(only to user)
+
+@enduml
